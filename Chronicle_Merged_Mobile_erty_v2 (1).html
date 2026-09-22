@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicle - Your Personal Diary Sanctuary</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Playfair Display and Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        diary: {
+                            50: '#fcfbfa',
+                            100: '#f4f0eb',
+                            200: '#e6ded3',
+                            300: '#d4c7b6',
+                            400: '#bfae96',
+                            500: '#a39077',
+                            600: '#87735a',
+                            700: '#6c5a44',
+                            800: '#524433',
+                            900: '#382e22',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f5f0;
+            color: #382e22;
+        }
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f4f0eb;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4c7b6;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bfae96;
+        }
+        #privacy-shield {
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+        }
+    
+        /* Chronicle mobile polish */
+        @media (max-width: 767px) {
+            html { scroll-behavior: smooth; }
+            body { overflow-x: hidden; padding-bottom: 72px; }
+            header { position: sticky; top: 0; z-index: 40; }
+            header > div { padding-left: 0.85rem !important; padding-right: 0.85rem !important; }
+            header nav { display: none !important; }
+            main { padding: 1rem 0.85rem 5.5rem !important; }
+            #tab-entries > div:first-child { padding: 1rem !important; }
+            #welcome-heading { font-size: 1.45rem !important; }
+            #entries-container { grid-template-columns: 1fr !important; }
+            #tab-calendar .grid { gap: 0.3rem !important; }
+            #calendar-grid > div { min-height: 3.7rem !important; height: auto !important; padding: 0.35rem !important; border-radius: 0.8rem !important; }
+            #calendar-grid > div button { min-height: 3.1rem; }
+            #tab-gallery .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.55rem !important; }
+            #editor-modal { padding: 0 !important; align-items: stretch !important; }
+            #editor-container { width: 100% !important; max-width: none !important; height: 100dvh !important; max-height: none !important; border-radius: 0 !important; }
+            #editor-header { padding: 0.8rem !important; }
+            #entry-title-input { width: min(52vw, 14rem) !important; font-size: 1rem !important; }
+            #editor-header .px-5 { padding-left: 0.8rem !important; padding-right: 0.8rem !important; }
+            #entry-content-input { min-height: 45dvh !important; }
+            #editor-toolbar { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+            #editor-toolbar button { flex: 0 0 auto; }
+            #entry-media-preview { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+            #sketchpad-modal { padding: 0.5rem !important; align-items: flex-end !important; }
+            #sketchpad-modal > div { width: 100% !important; max-height: 94dvh !important; border-radius: 1.5rem !important; }
+            #sketch-canvas { width: 100% !important; height: min(58dvh, 22rem) !important; display: block; touch-action: none; }
+            #editor-toolbar label, #editor-toolbar button { min-height: 2.7rem; }
+            #calendar-date-modal > div { width: calc(100vw - 1rem) !important; max-height: 85dvh; overflow-y: auto; }
+            .mobile-action-row { display: flex !important; }
+        }
+        @media (min-width: 768px) {
+            .mobile-action-row { display: none !important; }
+        }
+</style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-diary-200 pb-16 md:pb-0">
+
+    <!-- Privacy Shield (App Switcher / Visibility Blur) -->
+    <div id="privacy-shield" class="fixed inset-0 z-50 bg-diary-900/80 hidden flex flex-col items-center justify-center text-center p-6 transition-all">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-diary-200">
+            <div class="w-16 h-16 rounded-2xl bg-diary-100 text-diary-800 flex items-center justify-center text-2xl mx-auto mb-4 shadow-inner">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2 class="text-xl font-serif font-bold text-diary-900 mb-2">Sanctuary Locked</h2>
+            <p class="text-sm text-diary-600 mb-6">Your private thoughts are protected and blurred.</p>
+            <button onclick="app.unlockPrivacyShield()" class="w-full py-3 rounded-xl bg-diary-800 hover:bg-diary-900 text-white font-medium shadow-lg transition-all">Return to Journal</button>
+        </div>
+    </div>
+
+    <!-- 6-Digit PIN Screen -->
+    <div id="lock-screen" class="fixed inset-0 z-40 bg-[#f7f5f0] flex flex-col items-center justify-center p-6 hidden">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-diary-200 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-diary-100 text-diary-800 flex items-center justify-center text-2xl mx-auto mb-4 shadow-inner">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 class="text-2xl font-serif font-bold text-diary-900 mb-1">Enter Passcode</h2>
+            <p class="text-xs text-diary-600 mb-6">Enter your 6-digit secure PIN</p>
+            
+            <div class="flex justify-center gap-2 mb-6" id="pin-dots">
+                <div class="w-4 h-4 rounded-full border-2 border-diary-300"></div>
+                <div class="w-4 h-4 rounded-full border-2 border-diary-300"></div>
+                <div class="w-4 h-4 rounded-full border-2 border-diary-300"></div>
+                <div class="w-4 h-4 rounded-full border-2 border-diary-300"></div>
+                <div class="w-4 h-4 rounded-full border-2 border-diary-300"></div>
+                <div class="w-4 h-4 rounded-full border-2 border-diary-300"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <button onclick="app.pressPin('1')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">1</button>
+                <button onclick="app.pressPin('2')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">2</button>
+                <button onclick="app.pressPin('3')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">3</button>
+                <button onclick="app.pressPin('4')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">4</button>
+                <button onclick="app.pressPin('5')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">5</button>
+                <button onclick="app.pressPin('6')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">6</button>
+                <button onclick="app.pressPin('7')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">7</button>
+                <button onclick="app.pressPin('8')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">8</button>
+                <button onclick="app.pressPin('9')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">9</button>
+                <button onclick="app.clearPin()" class="py-3 rounded-xl bg-diary-50 border border-diary-200 text-xs font-semibold text-rose-500">Clear</button>
+                <button onclick="app.pressPin('0')" class="py-3 rounded-xl bg-diary-50 border border-diary-200 font-bold text-lg hover:bg-diary-100">0</button>
+                <button onclick="app.backspacePin()" class="py-3 rounded-xl bg-diary-50 border border-diary-200 text-xs font-semibold"><i class="fa-solid fa-delete-left"></i></button>
+            </div>
+            <p id="pin-error" class="text-xs text-rose-500 h-4"></p>
+        </div>
+    </div>
+
+    <!-- General Modal Container -->
+    <div id="custom-modal" class="fixed inset-0 z-50 bg-diary-900/30 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full border border-diary-200">
+            <h3 id="modal-title" class="text-xl font-serif font-bold text-diary-900 mb-2">Notice</h3>
+            <p id="modal-message" class="text-diary-700 text-sm mb-6 leading-relaxed"></p>
+            <div id="modal-actions" class="flex justify-end gap-3">
+                <button id="modal-cancel-btn" onclick="app.closeModal()" class="px-4 py-2 bg-diary-100 hover:bg-diary-200 text-diary-800 rounded-xl font-medium text-sm transition-all hidden">Cancel</button>
+                <button id="modal-confirm-btn" onclick="app.closeModal()" class="px-5 py-2 bg-diary-800 hover:bg-diary-900 text-white rounded-xl font-medium text-sm transition-all">Okay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-[#f7f5f0]/90 backdrop-blur-md border-b border-diary-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="app.switchTab('entries')">
+                <div class="w-10 h-10 rounded-xl bg-diary-800 text-white flex items-center justify-center text-xl shadow-md">
+                    📖
+                </div>
+                <div>
+                    <h1 class="text-xl font-serif font-bold text-diary-900 tracking-tight">Chronicle</h1>
+                    <p class="text-xs text-diary-500 tracking-wide uppercase font-medium">Offline Personal Sanctuary</p>
+                </div>
+            </div>
+
+            <!-- Journal Selector & Desktop Nav -->
+            <div class="hidden md:flex items-center gap-4">
+
+
+                <nav class="flex items-center gap-1 bg-diary-100/80 p-1 rounded-2xl border border-diary-200">
+                    <button onclick="app.switchTab('entries')" id="nav-entries" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all bg-diary-800 text-white shadow-sm">Entries</button>
+                    <button onclick="app.switchTab('calendar')" id="nav-calendar" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all text-diary-700 hover:bg-diary-200">Calendar</button>
+                    <button onclick="app.switchTab('analytics')" id="nav-analytics" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all text-diary-700 hover:bg-diary-200">Analytics</button>
+                    <button onclick="app.switchTab('gallery')" id="nav-gallery" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all text-diary-700 hover:bg-diary-200">Gallery</button>
+                    <button onclick="app.switchTab('settings')" id="nav-settings" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all text-diary-700 hover:bg-diary-200">Settings</button>
+                </nav>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="app.openEditor()" class="hidden sm:flex items-center gap-2 px-4 py-2.5 bg-diary-800 hover:bg-diary-900 text-white font-medium text-sm rounded-xl shadow-md hover:shadow-lg transition-all">
+                    <span>✨</span>
+                    <span>New Entry</span>
+                </button>
+                <button onclick="app.lockAppNow()" class="md:hidden p-2.5 bg-diary-100 hover:bg-diary-200 text-diary-800 rounded-xl transition-all" title="Lock App">
+                    🔒
+                </button>
+                <button onclick="app.switchTab('settings')" class="md:hidden p-2.5 bg-diary-100 hover:bg-diary-200 text-diary-800 rounded-xl transition-all" title="Settings">
+                    ⚙️
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
+
+        <!-- TAB 1: ENTRIES DASHBOARD -->
+        <section id="tab-entries" class="space-y-6">
+            <!-- Stats / Welcome Banner -->
+            <div class="bg-gradient-to-r from-diary-200/60 to-diary-100 rounded-3xl p-6 sm:p-8 border border-diary-300/50 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-serif font-bold text-diary-900 mb-1" id="welcome-heading">Welcome back</h2>
+                    <p class="text-diary-700 text-sm sm:text-base">All your memories and thoughts are safely stored locally on this device.</p>
+                </div>
+                <div class="flex gap-4 bg-white/60 backdrop-blur-sm p-4 rounded-2xl border border-diary-200">
+                    <div class="text-center px-3 border-r border-diary-200">
+                        <span id="stat-total" class="block text-xl font-bold text-diary-900">0</span>
+                        <span class="text-xs text-diary-500 uppercase tracking-wider font-semibold">Entries</span>
+                    </div>
+                    <div class="text-center px-3">
+                        <span id="stat-mood" class="block text-2xl">✨</span>
+                        <span class="text-xs text-diary-500 uppercase tracking-wider font-semibold">Vibe</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div class="relative w-full sm:w-96">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-diary-400"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" id="search-input" oninput="app.renderEntries()" placeholder="Search (tag:fitness, mood:😃)..." class="w-full pl-10 pr-4 py-3 bg-white border border-diary-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-diary-500 shadow-sm transition-all">
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto items-center justify-end">
+                    <button onclick="app.toggleStarredFilter()" id="starred-filter-btn" class="px-4 py-3 bg-white border border-diary-200 rounded-2xl text-xs font-semibold text-diary-800 shadow-sm flex items-center gap-2 hover:bg-diary-50 transition-all">
+                        <i class="fa-regular fa-star text-amber-500"></i> Starred Only
+                    </button>
+                    <select id="mood-filter" onchange="app.renderEntries()" class="px-4 py-3 bg-white border border-diary-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-diary-500 shadow-sm font-medium text-diary-800">
+                        <option value="">All Moods</option>
+                        <option value="😃">😃 Joyful</option>
+                        <option value="😌">😌 Peaceful</option>
+                        <option value="🚀">🚀 Motivated</option>
+                        <option value="💡">💡 Inspired</option>
+                        <option value="☕">☕ Cozy</option>
+                        <option value="😢">😢 Melancholy</option>
+                        <option value="🌧️">🌧️ Rainy</option>
+                        <option value="✨">✨ Grateful</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Entries Grid -->
+            <div id="entries-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically populated entries -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl border border-diary-200 shadow-sm p-8">
+                <div class="text-5xl mb-4">🍂</div>
+                <h3 class="text-xl font-serif font-bold text-diary-900 mb-2">No diary entries found</h3>
+                <p class="text-diary-600 text-sm max-w-sm mx-auto mb-6">Begin your journaling journey today by creating your first memory.</p>
+                <button onclick="app.openEditor()" class="px-6 py-3 bg-diary-800 hover:bg-diary-900 text-white font-medium rounded-xl shadow-md transition-all">
+                    Write First Entry
+                </button>
+            </div>
+        </section>
+
+        <!-- TAB 2: CALENDAR HEATMAP VIEW -->
+        <section id="tab-calendar" class="space-y-6 hidden">
+            <div class="bg-white p-6 sm:p-8 rounded-3xl border border-diary-200 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 id="calendar-month-year" class="text-xl font-serif font-bold text-diary-900"></h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="app.changeMonth(-1)" class="p-2.5 rounded-xl bg-diary-100 hover:bg-diary-200 text-diary-800"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                        <button onclick="app.changeMonth(1)" class="p-2.5 rounded-xl bg-diary-100 hover:bg-diary-200 text-diary-800"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-diary-500 mb-3 uppercase tracking-wider">
+                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-2.5">
+                    <!-- Calendar days injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: ANALYTICS DASHBOARD -->
+        <section id="tab-analytics" class="space-y-6 hidden">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-6 rounded-3xl border border-diary-200 shadow-sm">
+                    <p class="text-xs text-diary-500 mb-1 font-semibold uppercase tracking-wider">Total Entries</p>
+                    <h3 id="stat-total-entries" class="text-3xl font-serif font-bold text-diary-900">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-diary-200 shadow-sm">
+                    <p class="text-xs text-diary-500 mb-1 font-semibold uppercase tracking-wider">Writing Streak 🔥</p>
+                    <h3 id="stat-streak" class="text-3xl font-serif font-bold text-diary-900">0 days</h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-diary-200 shadow-sm">
+                    <p class="text-xs text-diary-500 mb-1 font-semibold uppercase tracking-wider">Total Words</p>
+                    <h3 id="stat-words" class="text-3xl font-serif font-bold text-diary-900">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl border border-diary-200 shadow-sm">
+                    <p class="text-xs text-diary-500 mb-1 font-semibold uppercase tracking-wider">Average Mood</p>
+                    <h3 id="stat-avg-mood" class="text-3xl font-bold">✨</h3>
+                </div>
+            </div>
+
+            <!-- On This Day Memory Highlight -->
+            <div class="bg-white p-6 sm:p-8 rounded-3xl border border-diary-200 shadow-sm space-y-3">
+                <div class="flex items-center gap-3 text-diary-800">
+                    <i class="fa-solid fa-clock-rotate-left text-lg"></i>
+                    <h3 class="font-serif font-bold text-lg text-diary-900">On This Day in History</h3>
+                </div>
+                <div id="on-this-day-content" class="text-sm text-diary-600 leading-relaxed">
+                    No past entries found for this calendar date.
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: MEDIA GALLERY -->
+        <section id="tab-gallery" class="space-y-6 hidden">
+            <div class="flex items-center gap-2 mb-4">
+                <button onclick="app.filterGallery('all')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-diary-800 text-white gallery-filter">All Media</button>
+                <button onclick="app.filterGallery('photo')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-diary-100 text-diary-800 gallery-filter">Photos</button>
+                <button onclick="app.filterGallery('sketch')" class="px-4 py-2 rounded-xl text-xs font-semibold bg-diary-100 text-diary-800 gallery-filter">Sketches</button>
+            </div>
+            <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <!-- Media items injected here -->
+            </div>
+        </section>
+
+        <!-- TAB 5: SETTINGS & BACKUP -->
+        <section id="tab-settings" class="space-y-6 hidden max-w-2xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-diary-200 shadow-sm space-y-8">
+                <div class="border-b border-diary-200 pb-4">
+                    <h2 class="text-2xl font-serif font-bold text-diary-900">Settings & Data Management</h2>
+                    <p class="text-diary-600 text-sm">Manage your offline storage, backups, and journal security.</p>
+                </div>
+
+                <!-- Backup & Transfer section -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-serif font-bold text-diary-900 flex items-center gap-2">
+                        <span>📦</span> Data Transfer & Backups
+                    </h3>
+                    <p class="text-sm text-diary-600">Export your entire diary database as a JSON file to transfer to another device or keep a safe offline backup.</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                        <button onclick="app.exportData()" class="flex-1 px-5 py-3 bg-diary-800 hover:bg-diary-900 text-white font-medium rounded-xl shadow-sm text-sm flex items-center justify-center gap-2 transition-all">
+                            <span>📥</span> Export JSON Backup
+                        </button>
+                        <label class="flex-1 px-5 py-3 bg-diary-100 hover:bg-diary-200 text-diary-800 font-medium rounded-xl shadow-sm text-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+                            <span>📤</span> Import JSON Backup
+                            <input type="file" id="import-file" accept=".json" onchange="app.importData(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Security PIN Section -->
+                <div class="space-y-4 pt-4 border-t border-diary-200">
+                    <h3 class="text-lg font-serif font-bold text-diary-900 flex items-center gap-2">
+                        <span>🔒</span> 6-Digit Passcode Security
+                    </h3>
+                    <p class="text-sm text-diary-600">Set a secure 6-digit numeric PIN code to protect your offline diary.</p>
+                    
+                    <div class="bg-diary-50 p-4 rounded-2xl border border-diary-200 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-medium text-diary-900 block text-sm">Passcode Protection</span>
+                                <span class="text-xs text-diary-500" id="pin-status-text">Status: Disabled</span>
+                            </div>
+                            <button onclick="app.togglePinSecurity()" id="pin-toggle-btn" class="px-4 py-2 bg-diary-800 hover:bg-diary-900 text-white font-medium rounded-xl text-sm transition-all">Enable PIN</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decoy Mode + Lock App -->
+                <div class="space-y-4 pt-4 border-t border-diary-200">
+                    <h3 class="text-lg font-serif font-bold text-diary-900 flex items-center gap-2">
+                        <span>🕶️</span> Privacy & Quick Lock
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="bg-diary-50 p-4 rounded-2xl border border-diary-200">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <span class="font-medium text-diary-900 block text-sm">Decoy Journal PIN</span>
+                                    <span class="text-xs text-diary-500">A second 6-digit PIN opens a separate decoy journal.</span>
+                                </div>
+                                <span id="decoy-status-text" class="text-xs font-semibold text-diary-600">Disabled</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-3">
+                                <input type="password" inputmode="numeric" maxlength="6" id="new-decoy-input" placeholder="6-digit decoy PIN" class="flex-1 px-4 py-2.5 bg-white rounded-xl text-xs border border-diary-200 outline-none">
+                                <button onclick="app.saveDecoyPin()" class="px-4 py-2.5 bg-diary-800 hover:bg-diary-900 text-white rounded-xl text-xs font-semibold">Save Decoy PIN</button>
+                            </div>
+                            <button onclick="app.disableDecoyPin()" class="mt-2 text-xs font-semibold text-rose-600">Disable Decoy PIN</button>
+                        </div>
+                        <button onclick="app.lockAppNow()" class="w-full px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl shadow-sm text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-lock"></i> Lock This App Now
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="space-y-4 pt-4 border-t border-diary-200">
+                    <h3 class="text-lg font-serif font-bold text-rose-700 flex items-center gap-2">
+                        <span>⚠️</span> Danger Zone
+                    </h3>
+                    <p class="text-sm text-diary-600">Permanently delete all journal entries stored on this browser.</p>
+                    <button onclick="app.confirmClearAll()" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-xl text-sm shadow-sm transition-all">
+                        Clear All Entries
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Mobile Fixed Bottom Navigation Bar -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-diary-200 px-4 py-2 flex items-center justify-around shadow-lg">
+        <button onclick="app.switchTab('entries')" id="m-nav-entries" class="flex flex-col items-center gap-1 text-diary-800 text-xs font-semibold py-1">
+            <i class="fa-solid fa-book text-base"></i> Entries
+        </button>
+        <button onclick="app.switchTab('calendar')" id="m-nav-calendar" class="flex flex-col items-center gap-1 text-diary-400 text-xs font-medium py-1">
+            <i class="fa-solid fa-calendar-days text-base"></i> Calendar
+        </button>
+        <!-- Floating Center New Entry Button -->
+        <button onclick="app.openEditor()" class="w-12 h-12 -mt-4 bg-diary-800 hover:bg-diary-900 text-white rounded-full flex items-center justify-center text-xl shadow-xl transition-transform active:scale-95">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+        <button onclick="app.switchTab('analytics')" id="m-nav-analytics" class="flex flex-col items-center gap-1 text-diary-400 text-xs font-medium py-1">
+            <i class="fa-solid fa-chart-pie text-base"></i> Analytics
+        </button>
+        <button onclick="app.switchTab('gallery')" id="m-nav-gallery" class="flex flex-col items-center gap-1 text-diary-400 text-xs font-medium py-1">
+            <i class="fa-solid fa-images text-base"></i> Gallery
+        </button>
+    </div>
+
+    <!-- CALENDAR DATE DETAILS MODAL -->
+    <div id="calendar-date-modal" class="fixed inset-0 z-50 bg-diary-900/50 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-6">
+        <div class="bg-white w-full max-w-lg rounded-3xl border border-diary-200 shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between p-5 border-b border-diary-200">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-diary-500">Calendar</p>
+                    <h3 id="calendar-date-title" class="text-xl font-serif font-bold text-diary-900">Selected Date</h3>
+                </div>
+                <button onclick="app.closeCalendarDateModal()" class="p-2 rounded-xl bg-diary-100 text-diary-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div id="calendar-date-entries" class="space-y-2"></div>
+                <button onclick="app.addEntryForCalendarDate()" class="w-full px-4 py-3 rounded-2xl bg-diary-800 hover:bg-diary-900 text-white text-sm font-semibold flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Add Entry on This Date
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENTRY DETAIL VIEW -->
+    <div id="entry-detail-modal" class="fixed inset-0 z-[55] bg-diary-900/50 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-6">
+        <div class="bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl border border-diary-200 shadow-2xl overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-5 border-b border-diary-200">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-diary-500">Entry Details</p>
+                    <h3 id="detail-entry-title" class="text-xl font-serif font-bold text-diary-900">Untitled</h3>
+                </div>
+                <button onclick="app.closeEntryDetail()" class="p-2 rounded-xl bg-diary-100 text-diary-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-5">
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <span id="detail-entry-date" class="px-3 py-2 rounded-xl bg-diary-50 border border-diary-200"></span>
+                    <span id="detail-entry-mood" class="px-3 py-2 rounded-xl bg-diary-50 border border-diary-200"></span>
+                    <span id="detail-entry-location" class="px-3 py-2 rounded-xl bg-diary-50 border border-diary-200"></span>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase tracking-widest font-bold text-diary-500 mb-2">Feelings</p>
+                    <div id="detail-entry-feelings" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase tracking-widest font-bold text-diary-500 mb-2">What I wrote</p>
+                    <div id="detail-entry-content" class="whitespace-pre-wrap text-sm sm:text-base leading-relaxed text-diary-800"></div>
+                </div>
+                <div id="detail-entry-tags-wrap" class="hidden">
+                    <p class="text-[10px] uppercase tracking-widest font-bold text-diary-500 mb-2">Tags</p>
+                    <div id="detail-entry-tags" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div id="detail-entry-media" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+            </div>
+            <div class="p-4 border-t border-diary-200 bg-diary-50 flex gap-2">
+                <button id="detail-entry-edit-btn" class="flex-1 px-4 py-3 rounded-2xl bg-diary-800 text-white text-sm font-semibold"><i class="fa-solid fa-pen mr-2"></i>Edit Entry</button>
+                <button onclick="app.closeEntryDetail()" class="px-4 py-3 rounded-2xl bg-white border border-diary-200 text-diary-800 text-sm font-semibold">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MEDIA LIGHTBOX -->
+    <div id="media-lightbox" class="fixed inset-0 z-[60] bg-black/90 hidden items-center justify-center p-4" onclick="app.closeMediaLightbox()">
+        <button class="absolute top-4 right-4 text-white text-2xl p-2" onclick="app.closeMediaLightbox()">×</button>
+        <img id="media-lightbox-image" src="" alt="Chronicle media" class="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" onclick="event.stopPropagation()">
+    </div>
+
+    <!-- ENTRY EDITOR MODAL (Supports Split-View, Sketchpad, Voice Note, Rich Formatting) -->
+    <div id="editor-modal" class="fixed inset-0 z-50 bg-diary-900/50 backdrop-blur-sm hidden flex items-center justify-center p-2 sm:p-6 overflow-hidden">
+        <div id="editor-container" class="bg-white w-full max-w-5xl h-[95vh] rounded-3xl flex flex-col shadow-2xl border border-diary-200 relative transition-all overflow-hidden">
+            
+            <!-- Floating Exit Focus Mode Button -->
+            <button id="focus-exit-btn" onclick="app.toggleFocusMode()" class="absolute top-4 right-4 z-30 px-3 py-1.5 rounded-xl bg-diary-900 text-white text-xs font-semibold shadow-lg hidden flex items-center gap-1.5">
+                <i class="fa-solid fa-xmark"></i> Exit Focus Mode
+            </button>
+
+            <!-- Editor Header -->
+            <div id="editor-header" class="flex items-center justify-between p-4 sm:p-6 border-b border-diary-200 gap-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="app.closeEditor()" class="p-2 rounded-xl bg-diary-100 hover:bg-diary-200 text-diary-800"><i class="fa-solid fa-arrow-left text-xs"></i></button>
+                    <input type="text" id="entry-title-input" placeholder="Entry Title..." class="bg-transparent font-serif font-bold text-lg sm:text-xl text-diary-900 outline-none w-48 sm:w-80">
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="app.toggleFocusMode()" class="p-2.5 rounded-xl bg-diary-100 hover:bg-diary-200 text-diary-800 text-xs" title="Focus Mode"><i class="fa-solid fa-expand"></i></button>
+                    <button onclick="app.toggleSplitScreen()" class="hidden md:flex p-2.5 rounded-xl bg-diary-100 hover:bg-diary-200 text-diary-800 text-xs" title="Dual Split View"><i class="fa-solid fa-columns"></i></button>
+                    <button onclick="app.saveCurrentEntry()" class="px-5 py-2.5 rounded-xl bg-diary-800 hover:bg-diary-900 text-white text-xs font-semibold shadow-md">Save Entry</button>
+                </div>
+            </div>
+
+            <!-- Formatting Toolbar -->
+            <div id="editor-toolbar" class="flex items-center gap-1.5 px-4 py-2 border-b border-diary-200 bg-diary-50 overflow-x-auto text-xs">
+                <button onclick="app.formatText('**', '**')" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                <button onclick="app.formatText('*', '*')" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                <button onclick="app.formatText('# ', '')" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100" title="Heading"><i class="fa-solid fa-heading"></i></button>
+                <button onclick="app.formatText('- ', '')" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100" title="List"><i class="fa-solid fa-list-ul"></i></button>
+                <button onclick="app.formatText('> ', '')" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100" title="Quote"><i class="fa-solid fa-quote-left"></i></button>
+                <div class="h-4 w-[1px] bg-diary-300 mx-1"></div>
+                <button onclick="app.openSketchpadModal()" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100 flex items-center gap-1 text-diary-800 font-semibold"><i class="fa-solid fa-paintbrush"></i> Sketch</button>
+                <button onclick="app.toggleAudioRecording()" id="audio-rec-btn" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100 flex items-center gap-1 text-rose-600 font-semibold"><i class="fa-solid fa-microphone"></i> Record</button>
+                <button onclick="app.toggleAudioPause()" id="audio-pause-btn" class="hidden p-2 rounded-lg bg-amber-50 border border-amber-200 hover:bg-amber-100 flex items-center gap-1 text-amber-700 font-semibold"><i class="fa-solid fa-pause"></i> Pause</button>
+                <label class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100 flex items-center gap-1 cursor-pointer text-diary-800 font-semibold">
+                    <i class="fa-solid fa-camera"></i> Camera <input id="camera-input" type="file" accept="image/*" capture="environment" onchange="app.attachPhoto(event)" class="hidden">
+                </label>
+                <label class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100 flex items-center gap-1 cursor-pointer text-diary-800 font-semibold">
+                    <i class="fa-solid fa-images"></i> Gallery <input id="photo-input" type="file" accept="image/*" multiple onchange="app.attachPhoto(event)" class="hidden">
+                </label>
+            </div>
+
+            <!-- Editor Workspace -->
+            <div class="flex-1 flex overflow-hidden">
+                <div id="primary-editor-pane" class="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto gap-4">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <label class="flex items-center gap-2 bg-diary-50 border border-diary-200 px-3 py-2 rounded-xl text-xs font-semibold text-diary-800">
+                            <span>Date</span>
+                            <input type="date" id="entry-date-input" class="bg-transparent outline-none text-diary-800">
+                        </label>
+                        <div class="flex items-center gap-2 bg-diary-50 border border-diary-200 px-3 py-2 rounded-xl text-xs font-semibold text-diary-800 min-w-0">
+                            <i class="fa-solid fa-location-dot text-diary-600"></i>
+                            <span id="entry-location-text" class="truncate max-w-[10rem]">Location not set</span>
+                            <button type="button" onclick="app.useCurrentLocation()" class="px-2 py-1 rounded-lg bg-white border border-diary-200 hover:bg-diary-100 whitespace-nowrap">Use current</button>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <select id="entry-mood-select" class="bg-diary-50 border border-diary-200 px-3 py-2 rounded-xl text-xs font-semibold text-diary-800">
+                                <!-- Mood options injected -->
+                            </select>
+                            <button type="button" onclick="app.addCustomMood()" class="px-2.5 py-2 rounded-xl bg-diary-50 border border-diary-200 text-xs font-bold text-diary-700" title="Add custom mood">＋</button>
+                        </div>
+                        <button type="button" onclick="app.toggleFeelingsPicker()" class="px-3 py-2 rounded-xl bg-diary-50 border border-diary-200 text-xs font-semibold text-diary-800 whitespace-nowrap">
+                            <i class="fa-regular fa-heart mr-1"></i> Feelings
+                        </button>
+                        <input type="text" id="entry-tags-input" placeholder="Tags (e.g. personal, growth, goals)" class="bg-diary-50 border border-diary-200 px-3 py-2 rounded-xl text-xs flex-1 text-diary-800">
+                    </div>
+                    <div id="feelings-picker" class="hidden rounded-2xl border border-diary-200 bg-diary-50 p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <p class="text-[10px] uppercase tracking-widest font-bold text-diary-500">Choose all that apply</p>
+                            <button type="button" onclick="app.addCustomFeeling()" class="px-2.5 py-1.5 rounded-lg bg-white border border-diary-200 text-[10px] font-bold text-diary-700">＋ Custom feeling</button>
+                        </div>
+                        <div id="feelings-options" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <textarea id="entry-content-input" oninput="app.updateEditorCounters()" placeholder="Write your thoughts here..." class="w-full flex-1 bg-transparent resize-none outline-none text-sm sm:text-base leading-relaxed text-diary-900"></textarea>
+                    
+                    <div id="entry-media-preview" class="flex flex-wrap gap-3"></div>
+                </div>
+
+                <!-- Secondary Split Screen Pane -->
+                <div id="split-screen-pane" class="w-1/2 border-l border-diary-200 p-6 overflow-y-auto hidden flex flex-col bg-diary-50">
+                    <div class="flex items-center justify-between mb-3 pb-2 border-b border-diary-200">
+                        <span class="text-xs font-bold text-diary-600 uppercase tracking-wider">Dual Split View Reference</span>
+                        <select id="split-reference-select" onchange="app.loadSplitReference(this.value)" class="bg-white border border-diary-200 text-xs px-2 py-1.5 rounded-lg text-diary-800">
+                            <option value="">Select past entry...</option>
+                        </select>
+                    </div>
+                    <div id="split-reference-content" class="text-xs text-diary-600 leading-relaxed flex-1">Select an entry above to view side-by-side.</div>
+                </div>
+            </div>
+
+            <!-- Editor Footer Counters -->
+            <div class="px-6 py-3 border-t border-diary-200 flex items-center justify-between text-xs text-diary-500 bg-diary-50">
+                <div class="flex items-center gap-4 font-medium">
+                    <span id="word-count">0 words</span>
+                    <span id="char-count">0 characters</span>
+                    <span id="read-time">0 min read</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="audio-status" class="hidden text-rose-500 font-bold animate-pulse">● Recording voice note... <span id="audio-timer">00:00</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SKETCHPAD MODAL -->
+    <div id="sketchpad-modal" class="fixed inset-0 z-50 bg-diary-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white max-w-xl w-full max-h-[95dvh] p-4 sm:p-6 rounded-3xl shadow-2xl border border-diary-200 flex flex-col gap-4 overflow-y-auto">
+            <h3 class="font-serif font-bold text-lg text-diary-900 flex items-center gap-2"><i class="fa-solid fa-paintbrush text-diary-700"></i> Sketchpad</h3>
+            <p class="text-xs text-diary-500">Draw with your finger, stylus, or mouse.</p>
+            <div class="border border-diary-200 rounded-2xl overflow-hidden bg-white shadow-inner">
+                <canvas id="sketch-canvas" width="500" height="300" class="w-full cursor-crosshair touch-none"></canvas>
+            </div>
+            <div class="flex items-center justify-between">
+                <button onclick="app.clearSketch()" class="px-4 py-2 rounded-xl bg-diary-100 hover:bg-diary-200 text-xs font-semibold text-rose-600">Clear Canvas</button>
+                <div class="flex gap-2">
+                    <button onclick="app.closeSketchpadModal()" class="px-4 py-2 rounded-xl bg-diary-100 hover:bg-diary-200 text-xs font-semibold text-diary-800">Cancel</button>
+                    <button onclick="app.saveSketchToEntry()" class="px-4 py-2 rounded-xl bg-diary-800 hover:bg-diary-900 text-xs font-semibold text-white">Attach Sketch</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION CODE -->
+    <script>
+        class DiaryApp {
+            constructor() {
+                this.entries = [];
+                this.settings = {
+                    pin: null,
+                    activeJournal: 'Personal',
+                    customMoods: [],
+                    customFeelings: []
+                };
+                this._realEntries = [];
+                this._decoyEntries = [];
+                this.isDecoyActive = false;
+                this.decoyPin = null;
+                Object.defineProperty(this, 'entries', {
+                    configurable: true,
+                    get: () => this.isDecoyActive ? this._decoyEntries : this._realEntries,
+                    set: (value) => {
+                        if (this.isDecoyActive) this._decoyEntries = Array.isArray(value) ? value : [];
+                        else this._realEntries = Array.isArray(value) ? value : [];
+                    }
+                });
+                this.currentEditingId = null;
+                this.filterStarred = false;
+                this.activeGalleryFilter = 'all';
+                this.pinInput = '';
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.audioStream = null;
+                this.audioTimerInterval = null;
+                this.audioStartedAt = 0;
+                this.audioElapsedBeforePause = 0;
+                this.currentEntryAudio = null;
+                this.currentEntryLocation = '';
+                this.currentEntryFeelings = [];
+                this.currentEntryPhotos = [];
+                this.currentEntrySketches = [];
+                this.calendarDate = new Date();
+                this.selectedCalendarDate = null;
+
+                this.moodsList = [
+                    { emoji: '😃', label: 'Joyful' },
+                    { emoji: '😌', label: 'Peaceful' },
+                    { emoji: '🚀', label: 'Motivated' },
+                    { emoji: '💡', label: 'Inspired' },
+                    { emoji: '☕', label: 'Cozy' },
+                    { emoji: '😢', label: 'Melancholy' },
+                    { emoji: '🌧️', label: 'Rainy' },
+                    { emoji: '✨', label: 'Grateful' }
+                ];
+
+                this.feelingsList = [
+                    { emoji: '😊', label: 'Happy' }, { emoji: '🥰', label: 'Loved' }, { emoji: '😌', label: 'Calm' },
+                    { emoji: '😎', label: 'Confident' }, { emoji: '🤩', label: 'Excited' }, { emoji: '🥹', label: 'Touched' },
+                    { emoji: '😔', label: 'Sad' }, { emoji: '😢', label: 'Lonely' }, { emoji: '😤', label: 'Frustrated' },
+                    { emoji: '😡', label: 'Angry' }, { emoji: '😰', label: 'Anxious' }, { emoji: '😴', label: 'Tired' },
+                    { emoji: '🤔', label: 'Thoughtful' }, { emoji: '🥱', label: 'Bored' }, { emoji: '🙏', label: 'Grateful' },
+                    { emoji: '💪', label: 'Proud' }, { emoji: '🌱', label: 'Hopeful' }, { emoji: '💭', label: 'Nostalgic' },
+                    { emoji: '❤️', label: 'Affectionate' }, { emoji: '✨', label: 'Inspired' }
+                ];
+
+                // Custom moods/feelings are loaded from settings after init().
+
+                this.init();
+            }
+
+            init() {
+                this.loadFromStorage();
+                this.checkPinOnStartup();
+                this.updateSettingsUI();
+                this.switchTab('entries');
+                this.initSketchpad();
+
+                // App Switcher Privacy Shield
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        document.getElementById('privacy-shield').classList.remove('hidden');
+                    }
+                });
+            }
+
+            loadFromStorage() {
+                try {
+                    const savedEntries = localStorage.getItem('chronicle_entries');
+                    const savedDecoyEntries = localStorage.getItem('chronicle_entries_decoy');
+                    const savedSettings = localStorage.getItem('chronicle_settings');
+                    const savedDecoyPin = localStorage.getItem('chronicle_decoy_pin');
+                    if (savedEntries) this._realEntries = JSON.parse(savedEntries);
+                    if (savedDecoyEntries) this._decoyEntries = JSON.parse(savedDecoyEntries);
+                    if (savedSettings) this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
+                    this.settings.customMoods = Array.isArray(this.settings.customMoods) ? this.settings.customMoods : [];
+                    this.settings.customFeelings = Array.isArray(this.settings.customFeelings) ? this.settings.customFeelings : [];
+                    this.decoyPin = savedDecoyPin || null;
+                } catch (e) {
+                    console.error("Storage load error", e);
+                }
+            }
+
+            saveToStorage() {
+                try {
+                    localStorage.setItem('chronicle_entries', JSON.stringify(this._realEntries));
+                    localStorage.setItem('chronicle_entries_decoy', JSON.stringify(this._decoyEntries));
+                    localStorage.setItem('chronicle_settings', JSON.stringify(this.settings));
+                    if (this.decoyPin) localStorage.setItem('chronicle_decoy_pin', this.decoyPin);
+                    else localStorage.removeItem('chronicle_decoy_pin');
+                } catch (e) {
+                    this.showModal("Storage Error", "Could not save data to browser local storage.");
+                }
+            }
+
+            // --- Passcode Security (6-digit PIN) ---
+            checkPinOnStartup() {
+                if ((this.settings.pin && this.settings.pin.length === 6) || (this.decoyPin && this.decoyPin.length === 6)) {
+                    document.getElementById('lock-screen').classList.remove('hidden');
+                }
+            }
+
+            pressPin(digit) {
+                if (this.pinInput.length < 6) {
+                    this.pinInput += digit;
+                    this.updatePinDots();
+                    if (this.pinInput.length === 6) {
+                        this.verifyPin();
+                    }
+                }
+            }
+
+            backspacePin() {
+                this.pinInput = this.pinInput.slice(0, -1);
+                this.updatePinDots();
+            }
+
+            clearPin() {
+                this.pinInput = '';
+                this.updatePinDots();
+            }
+
+            updatePinDots() {
+                const dots = document.getElementById('pin-dots').children;
+                for (let i = 0; i < dots.length; i++) {
+                    if (i < this.pinInput.length) {
+                        dots[i].classList.add('bg-diary-800', 'border-diary-800');
+                    } else {
+                        dots[i].classList.remove('bg-diary-800', 'border-diary-800');
+                    }
+                }
+            }
+
+            verifyPin() {
+                if (this.settings.pin && this.pinInput === this.settings.pin) {
+                    this.isDecoyActive = false;
+                    document.getElementById('lock-screen').classList.add('hidden');
+                    this.pinInput = '';
+                    this.updatePinDots();
+                    this.renderEntries();
+                    return;
+                }
+                if (this.decoyPin && this.pinInput === this.decoyPin) {
+                    this.isDecoyActive = true;
+                    document.getElementById('lock-screen').classList.add('hidden');
+                    this.pinInput = '';
+                    this.updatePinDots();
+                    this.renderEntries();
+                    return;
+                }
+                document.getElementById('pin-error').innerText = 'Incorrect 6-digit PIN';
+                setTimeout(() => { 
+                    this.pinInput = ''; 
+                    this.updatePinDots(); 
+                    document.getElementById('pin-error').innerText = ''; 
+                }, 1000);
+            }
+
+            unlockPrivacyShield() {
+                document.getElementById('privacy-shield').classList.add('hidden');
+            }
+
+            lockAppNow() {
+                if (!((this.settings.pin && this.settings.pin.length === 6) || (this.decoyPin && this.decoyPin.length === 6))) {
+                    this.showModal('Set a PIN First', 'Enable your main PIN or configure a decoy PIN in Settings before locking the app.');
+                    return;
+                }
+                this.pinInput = '';
+                this.updatePinDots();
+                document.getElementById('pin-error').innerText = '';
+                document.getElementById('lock-screen').classList.remove('hidden');
+            }
+
+            saveDecoyPin() {
+                const input = document.getElementById('new-decoy-input');
+                const val = input.value.trim();
+                if (!/^\d{6}$/.test(val)) {
+                    this.showModal('Decoy PIN Error', 'Decoy PIN must be exactly 6 numeric digits.');
+                    return;
+                }
+                if (this.settings.pin && val === this.settings.pin) {
+                    this.showModal('Decoy PIN Error', 'Your decoy PIN must be different from your main PIN.');
+                    return;
+                }
+                this.decoyPin = val;
+                input.value = '';
+                this.saveToStorage();
+                this.updateSettingsUI();
+                this.showModal('Decoy PIN Saved', 'Entering this PIN at the lock screen will open the separate decoy journal.');
+            }
+
+            disableDecoyPin() {
+                this.decoyPin = null;
+                this.isDecoyActive = false;
+                this.saveToStorage();
+                this.updateSettingsUI();
+                this.showModal('Decoy Disabled', 'The decoy journal PIN has been disabled.');
+            }
+
+            togglePinSecurity() {
+                const newPin = prompt("Enter a new 6-digit PIN code (or leave empty to disable):");
+                if (newPin === null) return;
+                if (newPin === "") {
+                    this.settings.pin = null;
+                    this.showModal("Security", "PIN security disabled.");
+                } else if (newPin.length === 6 && !isNaN(newPin)) {
+                    this.settings.pin = newPin;
+                    this.showModal("Security", "6-Digit PIN security enabled successfully.");
+                } else {
+                    this.showModal("Error", "PIN must be exactly 6 numeric digits.");
+                }
+                this.saveToStorage();
+                this.updateSettingsUI();
+            }
+
+            updateSettingsUI() {
+                const statusText = document.getElementById('pin-status-text');
+                const btn = document.getElementById('pin-toggle-btn');
+                if (statusText && btn) {
+                    if (this.settings.pin) {
+                        statusText.innerText = "Status: Enabled 🔒";
+                        btn.innerText = "Change/Disable PIN";
+                    } else {
+                        statusText.innerText = "Status: Disabled 🔓";
+                        btn.innerText = "Enable PIN";
+                    }
+                }
+                const decoyStatus = document.getElementById('decoy-status-text');
+                if (decoyStatus) decoyStatus.innerText = this.decoyPin ? 'Enabled 🕶️' : 'Disabled';
+            }
+
+            // --- Navigation & Tabs ---
+            switchTab(tabId) {
+                const tabs = ['entries', 'calendar', 'analytics', 'gallery', 'settings'];
+                tabs.forEach(t => {
+                    const el = document.getElementById(`tab-${t}`);
+                    if (el) el.classList.add('hidden');
+                    
+                    // Desktop Nav
+                    const dBtn = document.getElementById(`nav-${t}`);
+                    if (dBtn) {
+                        dBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all text-diary-700 hover:bg-diary-200";
+                    }
+                    // Mobile Nav
+                    const mBtn = document.getElementById(`m-nav-${t}`);
+                    if (mBtn) {
+                        mBtn.className = "flex flex-col items-center gap-1 text-diary-400 text-xs font-medium py-1";
+                    }
+                });
+
+                const activeTabEl = document.getElementById(`tab-${tabId}`);
+                if (activeTabEl) activeTabEl.classList.remove('hidden');
+
+                const activeDBtn = document.getElementById(`nav-${tabId}`);
+                if (activeDBtn) {
+                    activeDBtn.className = "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all bg-diary-800 text-white shadow-sm";
+                }
+
+                const activeMBtn = document.getElementById(`m-nav-${tabId}`);
+                if (activeMBtn) {
+                    activeMBtn.className = "flex flex-col items-center gap-1 text-diary-800 text-xs font-semibold py-1";
+                }
+
+                if (tabId === 'entries') this.renderEntries();
+                if (tabId === 'calendar') this.renderCalendar();
+                if (tabId === 'analytics') this.updateAnalytics();
+                if (tabId === 'gallery') this.renderGallery('all');
+                if (tabId === 'settings') this.updateSettingsUI();
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            switchJournal(journalName) {
+                this.settings.activeJournal = journalName;
+                this.saveToStorage();
+                this.renderEntries();
+            }
+
+            // --- Dashboard & Entries ---
+            renderEntries() {
+                const container = document.getElementById('entries-container');
+                const emptyState = document.getElementById('empty-state');
+                const searchQuery = document.getElementById('search-input').value.toLowerCase();
+                this.populateMoodDropdown();
+                const moodFilter = document.getElementById('mood-filter').value;
+
+                container.innerHTML = '';
+
+                let filtered = this.entries;
+
+                if (this.filterStarred) {
+                    filtered = filtered.filter(e => e.starred);
+                }
+
+                if (moodFilter) {
+                    filtered = filtered.filter(e => e.mood === moodFilter);
+                }
+
+                if (searchQuery) {
+                    filtered = filtered.filter(e => {
+                        if (searchQuery.startsWith('tag:')) {
+                            const tag = searchQuery.replace('tag:', '').trim();
+                            return e.tags && e.tags.some(t => t.includes(tag));
+                        }
+                        if (searchQuery.startsWith('mood:')) {
+                            const mood = searchQuery.replace('mood:', '').trim();
+                            return e.mood && e.mood.toLowerCase().includes(mood);
+                        }
+                        return e.title.toLowerCase().includes(searchQuery) || 
+                               e.content.toLowerCase().includes(searchQuery) ||
+                               (e.tags && e.tags.some(t => t.includes(searchQuery)));
+                    });
+                }
+
+                // Update Header Stats
+                document.getElementById('stat-total').innerText = filtered.length;
+                if (filtered.length > 0) {
+                    document.getElementById('stat-mood').innerText = filtered[0].mood || '✨';
+                } else {
+                    document.getElementById('stat-mood').innerText = '✨';
+                }
+
+                const hour = new Date().getHours();
+                let greeting = "Good evening";
+                if (hour < 12) greeting = "Good morning";
+                else if (hour < 18) greeting = "Good afternoon";
+                document.getElementById('welcome-heading').innerText = greeting + ", Writer";
+
+                if (filtered.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+
+                filtered.forEach(entry => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-3xl p-6 border border-diary-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group';
+
+                    const formattedDate = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                    let tagsHtml = '';
+                    if (entry.tags && entry.tags.length > 0) {
+                        tagsHtml = entry.tags.slice(0, 3).map(t => `<span class="px-2.5 py-0.5 bg-diary-100 text-diary-700 text-xs font-medium rounded-md">#${t}</span>`).join('');
+                    }
+
+                    card.innerHTML = `
+                        <div class="cursor-pointer" onclick="app.viewEntryDetails('${entry.id}')">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-2xl p-2 bg-diary-50 rounded-2xl border border-diary-100">${entry.mood || '✨'}</span>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="event.stopPropagation(); app.toggleStar('${entry.id}')" class="text-diary-400 hover:text-amber-500">
+                                        <i class="${entry.starred ? 'fa-solid fa-star text-amber-500' : 'fa-regular fa-star'}"></i>
+                                    </button>
+                                    <span class="text-xs font-semibold text-diary-500 uppercase tracking-wider">${formattedDate}</span>
+                                </div>
+                            </div>
+                            <h4 class="text-xl font-serif font-bold text-diary-900 mb-2 group-hover:text-diary-600 transition-colors line-clamp-1">${this.escapeHtml(entry.title)}</h4>
+                            <p class="text-diary-600 text-sm line-clamp-3 mb-4 leading-relaxed">${this.escapeHtml(entry.content)}</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-4 border-t border-diary-100">
+                            <div class="flex flex-wrap gap-1">${tagsHtml}</div>
+                            <button onclick="app.confirmDelete('${entry.id}')" class="text-xs text-rose-500 hover:underline">Delete</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            toggleStarredFilter() {
+                this.filterStarred = !this.filterStarred;
+                const btn = document.getElementById('starred-filter-btn');
+                if (this.filterStarred) {
+                    btn.classList.add('border-amber-400', 'bg-amber-50');
+                } else {
+                    btn.classList.remove('border-amber-400', 'bg-amber-50');
+                }
+                this.renderEntries();
+            }
+
+            toggleStar(id) {
+                const entry = this.entries.find(e => e.id === id);
+                if (entry) {
+                    entry.starred = !entry.starred;
+                    this.saveToStorage();
+                    this.renderEntries();
+                }
+            }
+
+            confirmDelete(id) {
+                this.showModal("Delete Entry", "Are you sure you want to delete this memory?", () => {
+                    this.entries = this.entries.filter(e => e.id !== id);
+                    this.saveToStorage();
+                    this.renderEntries();
+                    this.renderCalendar();
+                    this.updateAnalytics();
+                    this.renderGallery('all');
+                    this.showModal("Deleted", "The entry has been removed.");
+                }, true);
+            }
+
+            // --- Editor Workspace ---
+            openEditor(id = null, dateOverride = null) {
+                this.currentEditingId = id;
+                this.currentEntryPhotos = [];
+                this.currentEntrySketches = [];
+                this.currentEntryAudio = null;
+                this.currentEntryFeelings = [];
+                document.getElementById('entry-media-preview').innerHTML = '';
+                document.getElementById('feelings-picker')?.classList.add('hidden');
+
+                this.populateMoodDropdown();
+                this.populateSplitReferenceDropdown();
+
+                if (id) {
+                    const entry = this.entries.find(e => e.id === id);
+                    if (entry) {
+                        document.getElementById('entry-title-input').value = entry.title;
+                        document.getElementById('entry-date-input').value = entry.date || new Date().toISOString().split('T')[0];
+                        document.getElementById('entry-content-input').value = entry.content;
+                        document.getElementById('entry-tags-input').value = entry.tags ? entry.tags.join(', ') : '';
+                        document.getElementById('entry-mood-select').value = entry.mood || '😃';
+                        this.currentEntryPhotos = entry.photos || [];
+                        this.currentEntrySketches = entry.sketches || [];
+                        this.currentEntryAudio = entry.audio || null;
+                        this.currentEntryLocation = entry.location || '';
+                        this.currentEntryFeelings = entry.feelings || [];
+                        this.updateEntryLocationUI();
+                        this.renderFeelingsOptions();
+                        this.renderMediaPreviews();
+                    }
+                } else {
+                    document.getElementById('entry-title-input').value = '';
+                    document.getElementById('entry-date-input').value = dateOverride || new Date().toISOString().split('T')[0];
+                    document.getElementById('entry-content-input').value = '';
+                    document.getElementById('entry-tags-input').value = '';
+                    this.currentEntryLocation = '';
+                    this.updateEntryLocationUI();
+                    this.currentEntryFeelings = [];
+                    this.renderFeelingsOptions();
+                }
+
+                this.updateEditorCounters();
+                document.getElementById('editor-modal').classList.remove('hidden');
+            }
+
+            closeEditor() {
+                document.getElementById('editor-modal').classList.add('hidden');
+                this.currentEditingId = null;
+            }
+
+            populateMoodDropdown() {
+                const select = document.getElementById('entry-mood-select');
+                select.innerHTML = '';
+                [...this.moodsList, ...(this.settings.customMoods || [])].forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.emoji;
+                    opt.textContent = `${m.emoji} ${m.label}`;
+                    select.appendChild(opt);
+                });
+
+                const filter = document.getElementById('mood-filter');
+                if (filter) {
+                    const existing = new Set([...filter.options].map(o => o.value));
+                    (this.settings.customMoods || []).forEach(m => {
+                        if (!existing.has(m.emoji)) {
+                            const opt = document.createElement('option');
+                            opt.value = m.emoji;
+                            opt.textContent = `${m.emoji} ${m.label}`;
+                            filter.appendChild(opt);
+                        }
+                    });
+                }
+            }
+
+            addCustomMood() {
+                const emoji = prompt('Choose an emoji for your custom mood:', '🌟');
+                if (!emoji || !emoji.trim()) return;
+                const label = prompt('Name this mood:', 'My Mood');
+                if (!label || !label.trim()) return;
+                const mood = { emoji: emoji.trim(), label: label.trim() };
+                const all = [...this.moodsList, ...(this.settings.customMoods || [])];
+                if (all.some(m => m.emoji === mood.emoji && m.label.toLowerCase() === mood.label.toLowerCase())) return;
+                this.settings.customMoods = [...(this.settings.customMoods || []), mood];
+                this.saveToStorage();
+                this.populateMoodDropdown();
+                document.getElementById('entry-mood-select').value = mood.emoji;
+            }
+
+            addCustomFeeling() {
+                const emoji = prompt('Choose an emoji for your custom feeling:', '💫');
+                if (!emoji || !emoji.trim()) return;
+                const label = prompt('Name this feeling:', 'My Feeling');
+                if (!label || !label.trim()) return;
+                const feeling = { emoji: emoji.trim(), label: label.trim() };
+                const all = [...this.feelingsList, ...(this.settings.customFeelings || [])];
+                if (all.some(f => f.emoji === feeling.emoji && f.label.toLowerCase() === feeling.label.toLowerCase())) return;
+                this.settings.customFeelings = [...(this.settings.customFeelings || []), feeling];
+                this.saveToStorage();
+                this.renderFeelingsOptions();
+                this.currentEntryFeelings.push(feeling.emoji);
+                this.renderFeelingsOptions();
+            }
+
+            renderFeelingsOptions() {
+                const container = document.getElementById('feelings-options');
+                if (!container) return;
+                container.innerHTML = [...this.feelingsList, ...(this.settings.customFeelings || [])].map((f, i) => {
+                    const selected = this.currentEntryFeelings.includes(f.emoji);
+                    return `<button type="button" onclick="app.toggleFeeling('${f.emoji}')" class="px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${selected ? 'bg-diary-800 text-white border-diary-800' : 'bg-white text-diary-700 border-diary-200'}">${f.emoji} ${f.label}</button>`;
+                }).join('');
+            }
+
+            toggleFeelingsPicker() {
+                const picker = document.getElementById('feelings-picker');
+                picker.classList.toggle('hidden');
+                this.renderFeelingsOptions();
+            }
+
+            toggleFeeling(emoji) {
+                if (this.currentEntryFeelings.includes(emoji)) {
+                    this.currentEntryFeelings = this.currentEntryFeelings.filter(f => f !== emoji);
+                } else {
+                    this.currentEntryFeelings.push(emoji);
+                }
+                this.renderFeelingsOptions();
+            }
+
+            updateEntryLocationUI() {
+                const el = document.getElementById('entry-location-text');
+                if (el) el.textContent = this.currentEntryLocation || 'Location not set';
+            }
+
+            async useCurrentLocation() {
+                const status = document.getElementById('entry-location-text');
+                if (!navigator.geolocation) {
+                    this.showModal('Location unavailable', 'This browser does not support location services.');
+                    return;
+                }
+                if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                    this.showModal('Location needs HTTPS', 'Browser location access usually requires HTTPS, localhost, or 127.0.0.1.');
+                    return;
+                }
+                if (status) status.textContent = 'Finding location…';
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    try {
+                        const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+                        if (!res.ok) throw new Error('Reverse geocoding failed');
+                        const data = await res.json();
+                        const place = data.city || data.locality || data.principalSubdivision || '';
+                        const country = data.countryName || '';
+                        this.currentEntryLocation = place && country ? `${place}, ${country}` : `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+                    } catch (e) {
+                        this.currentEntryLocation = `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+                    }
+                    this.updateEntryLocationUI();
+                }, (err) => {
+                    this.currentEntryLocation = '';
+                    this.updateEntryLocationUI();
+                    let message = 'Location access was not granted.';
+                    if (err && err.code === 2) message = 'Your device could not determine your location.';
+                    if (err && err.code === 3) message = 'Location request timed out. Please try again.';
+                    this.showModal('Location unavailable', message);
+                }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
+            }
+
+            formatText(before, after) {
+                const textarea = document.getElementById('entry-content-input');
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const text = textarea.value;
+                textarea.value = text.substring(0, start) + before + text.substring(start, end) + after + text.substring(end);
+                textarea.focus();
+                this.updateEditorCounters();
+            }
+
+            updateEditorCounters() {
+                const text = document.getElementById('entry-content-input').value;
+                const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+                const chars = text.length;
+                const readTime = Math.ceil(words / 200);
+
+                document.getElementById('word-count').innerText = `${words} words`;
+                document.getElementById('char-count').innerText = `${chars} characters`;
+                document.getElementById('read-time').innerText = `${readTime} min read`;
+            }
+
+            saveCurrentEntry() {
+                const title = document.getElementById('entry-title-input').value.trim();
+                const content = document.getElementById('entry-content-input').value.trim();
+                const rawTags = document.getElementById('entry-tags-input').value.trim();
+                const mood = document.getElementById('entry-mood-select').value;
+                const entryDate = document.getElementById('entry-date-input').value || new Date().toISOString().split('T')[0];
+                const tags = rawTags ? rawTags.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0) : [];
+
+                if (!content && !title) {
+                    this.showModal("Error", "Cannot save an empty entry.");
+                    return;
+                }
+
+                const todayStr = new Date().toISOString().split('T')[0];
+
+                if (this.currentEditingId) {
+                    const entry = this.entries.find(e => e.id === this.currentEditingId);
+                    if (entry) {
+                        entry.title = title || 'Untitled';
+                        entry.content = content;
+                        entry.tags = tags;
+                        entry.mood = mood;
+                        entry.feelings = [...this.currentEntryFeelings];
+                        entry.date = entryDate;
+                        entry.photos = this.currentEntryPhotos;
+                        entry.sketches = this.currentEntrySketches;
+                        entry.audio = this.currentEntryAudio;
+                        entry.location = this.currentEntryLocation || '';
+                        entry.updatedAt = new Date().toISOString();
+                    }
+                } else {
+                    const newEntry = {
+                        id: 'entry_' + Date.now() + Math.random().toString(36).substr(2, 5),
+                        journal: this.settings.activeJournal,
+                        date: entryDate,
+                        title: title || 'Untitled',
+                        content,
+                        tags,
+                        mood,
+                        feelings: [...this.currentEntryFeelings],
+                        photos: this.currentEntryPhotos,
+                        sketches: this.currentEntrySketches,
+                        audio: this.currentEntryAudio,
+                        location: this.currentEntryLocation || '',
+                        starred: false,
+                        createdAt: new Date().toISOString()
+                    };
+                    this.entries.unshift(newEntry);
+                }
+
+                this.saveToStorage();
+                this.closeEditor();
+                this.renderEntries();
+                this.renderCalendar();
+                this.updateAnalytics();
+                this.renderGallery('all');
+                this.showModal("Success", "Diary entry saved securely.");
+            }
+
+            // --- Split Screen Dual View ---
+            toggleSplitScreen() {
+                const pane = document.getElementById('split-screen-pane');
+                pane.classList.toggle('hidden');
+            }
+
+            populateSplitReferenceDropdown() {
+                const select = document.getElementById('split-reference-select');
+                select.innerHTML = '<option value="">Select past entry...</option>';
+                this.entries.forEach(e => {
+                    const opt = document.createElement('option');
+                    opt.value = e.id;
+                    opt.textContent = `${e.date} - ${e.title}`;
+                    select.appendChild(opt);
+                });
+            }
+
+            loadSplitReference(id) {
+                const refContent = document.getElementById('split-reference-content');
+                if (!id) {
+                    refContent.innerText = 'Select an entry above to view side-by-side.';
+                    return;
+                }
+                const entry = this.entries.find(e => e.id === id);
+                if (entry) {
+                    refContent.innerHTML = `<h4 class="font-serif font-bold text-diary-900 mb-2">${entry.title}</h4><p class="text-diary-700">${entry.content}</p>`;
+                }
+            }
+
+            // --- Focus Mode ---
+            toggleFocusMode() {
+                const modal = document.getElementById('editor-container');
+                const header = document.getElementById('editor-header');
+                const toolbar = document.getElementById('editor-toolbar');
+                const exitBtn = document.getElementById('focus-exit-btn');
+
+                modal.classList.toggle('fixed');
+                modal.classList.toggle('inset-0');
+                modal.classList.toggle('max-w-5xl');
+                modal.classList.toggle('h-[95vh]');
+                modal.classList.toggle('h-screen');
+                modal.classList.toggle('rounded-3xl');
+
+                header.classList.toggle('hidden');
+                toolbar.classList.toggle('hidden');
+                exitBtn.classList.toggle('hidden');
+            }
+
+            // --- Media Attachments (Photos, Voice, Sketches) ---
+            attachPhoto(event) {
+                const files = Array.from(event.target.files || []);
+                if (!files.length) return;
+                let remaining = files.length;
+                files.forEach(file => {
+                    if (!file.type.startsWith('image/')) { remaining--; return; }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.currentEntryPhotos.push(e.target.result);
+                        remaining--;
+                        if (remaining === 0) this.renderMediaPreviews();
+                    };
+                    reader.onerror = () => { remaining--; if (remaining === 0) this.renderMediaPreviews(); };
+                    reader.readAsDataURL(file);
+                });
+                event.target.value = '';
+            }
+
+            renderMediaPreviews() {
+                const container = document.getElementById('entry-media-preview');
+                container.innerHTML = '';
+
+                this.currentEntryPhotos.forEach((photo, idx) => {
+                    container.innerHTML += `<div class="relative w-16 h-16 rounded-xl overflow-hidden border border-diary-200"><img src="${photo}" class="w-full h-full object-cover"><button onclick="app.currentEntryPhotos.splice(${idx},1);app.renderMediaPreviews();" class="absolute top-1 right-1 bg-black/60 text-white rounded-full w-4 h-4 text-[9px] flex items-center justify-center">×</button></div>`;
+                });
+
+                this.currentEntrySketches.forEach((sketch, idx) => {
+                    container.innerHTML += `<div class="relative w-16 h-16 rounded-xl overflow-hidden border border-diary-200"><img src="${sketch}" class="w-full h-full object-cover"><button onclick="app.currentEntrySketches.splice(${idx},1);app.renderMediaPreviews();" class="absolute top-1 right-1 bg-black/60 text-white rounded-full w-4 h-4 text-[9px] flex items-center justify-center">×</button></div>`;
+                });
+
+                if (this.currentEntryAudio) {
+                    container.innerHTML += `<div class="flex items-center gap-2 p-2 rounded-xl bg-diary-100 text-xs font-semibold text-diary-800 w-full sm:w-auto"><i class="fa-solid fa-microphone text-rose-500"></i><audio controls preload="metadata" src="${this.currentEntryAudio}" class="max-w-[12rem]"></audio><button onclick="app.currentEntryAudio=null;app.renderMediaPreviews();" class="text-rose-500 ml-1">×</button></div>`;
+                }
+            }
+
+            // --- Vector Sketchpad ---
+            initSketchpad() {
+                const canvas = document.getElementById('sketch-canvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                let drawing = false;
+                let lastX = 0;
+                let lastY = 0;
+
+                const resizeCanvas = () => {
+                    const rect = canvas.getBoundingClientRect();
+                    const dpr = Math.max(1, window.devicePixelRatio || 1);
+                    const old = document.createElement('canvas');
+                    old.width = canvas.width; old.height = canvas.height;
+                    old.getContext('2d').drawImage(canvas, 0, 0);
+                    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+                    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+                    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = '#382e22';
+                    if (old.width && old.height) ctx.drawImage(old, 0, 0, old.width, old.height, 0, 0, rect.width, rect.height);
+                };
+
+                const point = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+                };
+
+                canvas.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    drawing = true;
+                    canvas.setPointerCapture?.(e.pointerId);
+                    const p = point(e); lastX = p.x; lastY = p.y;
+                    ctx.beginPath(); ctx.moveTo(lastX, lastY);
+                });
+                canvas.addEventListener('pointermove', (e) => {
+                    if (!drawing) return;
+                    e.preventDefault();
+                    const p = point(e);
+                    ctx.lineTo(p.x, p.y); ctx.stroke();
+                    lastX = p.x; lastY = p.y;
+                });
+                const stop = (e) => {
+                    drawing = false;
+                    try { canvas.releasePointerCapture?.(e.pointerId); } catch (_) {}
+                };
+                canvas.addEventListener('pointerup', stop);
+                canvas.addEventListener('pointercancel', stop);
+                canvas.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') drawing = false; });
+                window.addEventListener('resize', () => { if (!document.getElementById('sketchpad-modal').classList.contains('hidden')) resizeCanvas(); });
+                resizeCanvas();
+            }
+
+            clearSketch() {
+                const canvas = document.getElementById('sketch-canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            openSketchpadModal() {
+                const modal = document.getElementById('sketchpad-modal');
+                modal.classList.remove('hidden');
+                requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+            }
+
+            closeSketchpadModal() {
+                document.getElementById('sketchpad-modal').classList.add('hidden');
+            }
+
+            saveSketchToEntry() {
+                const canvas = document.getElementById('sketch-canvas');
+                const dataUrl = canvas.toDataURL();
+                this.currentEntrySketches.push(dataUrl);
+                this.renderMediaPreviews();
+                this.closeSketchpadModal();
+                this.clearSketch();
+            }
+
+            // --- Voice Recording ---
+            formatAudioTime(seconds) {
+                const total = Math.max(0, Math.floor(seconds));
+                const mins = Math.floor(total / 60).toString().padStart(2, '0');
+                const secs = (total % 60).toString().padStart(2, '0');
+                return `${mins}:${secs}`;
+            }
+
+            updateAudioTimer() {
+                const timer = document.getElementById('audio-timer');
+                if (!timer) return;
+                let elapsed = this.audioElapsedBeforePause;
+                if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    elapsed += (Date.now() - this.audioStartedAt) / 1000;
+                }
+                timer.textContent = this.formatAudioTime(elapsed);
+            }
+
+            resetAudioUI() {
+                clearInterval(this.audioTimerInterval);
+                this.audioTimerInterval = null;
+                this.audioElapsedBeforePause = 0;
+                this.audioStartedAt = 0;
+                const status = document.getElementById('audio-status');
+                const pauseBtn = document.getElementById('audio-pause-btn');
+                const recBtn = document.getElementById('audio-rec-btn');
+                if (status) status.classList.add('hidden');
+                if (pauseBtn) { pauseBtn.classList.add('hidden'); pauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause'; }
+                if (recBtn) { recBtn.innerHTML = '<i class="fa-solid fa-microphone"></i> Record'; recBtn.classList.remove('bg-rose-50','text-rose-700'); }
+                this.updateAudioTimer();
+            }
+
+            async toggleAudioRecording() {
+                if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    this.mediaRecorder.stop();
+                    return;
+                }
+                if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
+                    this.mediaRecorder.resume();
+                    this.audioStartedAt = Date.now();
+                    const status = document.getElementById('audio-status');
+                    const pauseBtn = document.getElementById('audio-pause-btn');
+                    if (status) status.classList.remove('hidden');
+                    if (pauseBtn) pauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+                    this.audioTimerInterval = setInterval(() => this.updateAudioTimer(), 250);
+                    return;
+                }
+
+                try {
+                    if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                        throw new Error('secure-context');
+                    }
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+                        throw new Error('unsupported');
+                    }
+
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                    });
+                    this.audioStream = stream;
+                    const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+                    const mimeType = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) || '';
+                    this.mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+                    this.audioChunks = [];
+                    this.audioElapsedBeforePause = 0;
+                    this.audioStartedAt = Date.now();
+
+                    this.mediaRecorder.ondataavailable = e => {
+                        if (e.data && e.data.size) this.audioChunks.push(e.data);
+                    };
+                    this.mediaRecorder.onerror = e => {
+                        console.error('MediaRecorder error:', e);
+                    };
+                    this.mediaRecorder.onstop = () => {
+                        clearInterval(this.audioTimerInterval);
+                        this.audioTimerInterval = null;
+                        if (this.audioStream) this.audioStream.getTracks().forEach(track => track.stop());
+                        this.audioStream = null;
+                        const type = this.mediaRecorder?.mimeType || mimeType || 'audio/webm';
+                        const blob = new Blob(this.audioChunks, { type });
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            this.currentEntryAudio = e.target.result;
+                            this.renderMediaPreviews();
+                            this.resetAudioUI();
+                        };
+                        reader.readAsDataURL(blob);
+                    };
+
+                    this.mediaRecorder.start(250);
+                    const status = document.getElementById('audio-status');
+                    const pauseBtn = document.getElementById('audio-pause-btn');
+                    const recBtn = document.getElementById('audio-rec-btn');
+                    if (status) status.classList.remove('hidden');
+                    if (pauseBtn) pauseBtn.classList.remove('hidden');
+                    if (recBtn) { recBtn.innerHTML = '<i class="fa-solid fa-stop"></i> Stop'; recBtn.classList.add('bg-rose-50','text-rose-700'); }
+                    this.audioTimerInterval = setInterval(() => this.updateAudioTimer(), 250);
+                    this.updateAudioTimer();
+                } catch (err) {
+                    console.error('Microphone access error:', err);
+                    let message = 'Chronicle could not access your microphone.';
+                    if (err.message === 'secure-context') {
+                        message = 'Microphone recording needs a secure app/site connection on phones. This will work properly once Chronicle is installed as an app or opened through HTTPS.';
+                    } else if (err.name === 'NotAllowedError' || err.name === 'SecurityError') {
+                        message = 'Microphone access was blocked. Check your browser or app microphone permission, then try again.';
+                    } else if (err.name === 'NotFoundError') {
+                        message = 'No microphone was found on this device.';
+                    } else if (err.name === 'NotReadableError') {
+                        message = 'The microphone is currently being used by another app.';
+                    } else if (err.message === 'unsupported') {
+                        message = 'This browser does not provide microphone recording for this page.';
+                    }
+                    this.showModal('Microphone Access', message);
+                }
+            }
+
+            toggleAudioPause() {
+                if (!this.mediaRecorder) return;
+                const pauseBtn = document.getElementById('audio-pause-btn');
+                const status = document.getElementById('audio-status');
+                if (this.mediaRecorder.state === 'recording') {
+                    this.audioElapsedBeforePause += (Date.now() - this.audioStartedAt) / 1000;
+                    this.mediaRecorder.pause();
+                    clearInterval(this.audioTimerInterval);
+                    if (pauseBtn) pauseBtn.innerHTML = '<i class="fa-solid fa-play"></i> Resume';
+                    if (status) status.innerHTML = 'Ⅱ Paused <span id="audio-timer">' + this.formatAudioTime(this.audioElapsedBeforePause) + '</span>';
+                } else if (this.mediaRecorder.state === 'paused') {
+                    this.mediaRecorder.resume();
+                    this.audioStartedAt = Date.now();
+                    if (pauseBtn) pauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+                    if (status) status.innerHTML = '● Recording voice note... <span id="audio-timer">' + this.formatAudioTime(this.audioElapsedBeforePause) + '</span>';
+                    this.audioTimerInterval = setInterval(() => this.updateAudioTimer(), 250);
+                }
+            }
+
+            // --- Calendar Heatmap ---
+            renderCalendar() {
+                const grid = document.getElementById('calendar-grid');
+                const monthYear = document.getElementById('calendar-month-year');
+                grid.innerHTML = '';
+
+                const year = this.calendarDate.getFullYear();
+                const month = this.calendarDate.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                const monthsNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                monthYear.innerText = `${monthsNames[month]} ${year}`;
+
+                for (let i = 0; i < firstDay; i++) {
+                    grid.appendChild(document.createElement('div'));
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const dayEntries = this.entries.filter(e =>
+                        e.date === dateStr &&
+                        (e.journal || 'Personal') === this.settings.activeJournal
+                    );
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const isToday = dateStr === todayStr;
+
+                    const cell = document.createElement('button');
+                    cell.type = 'button';
+                    cell.className = `h-20 sm:h-24 rounded-2xl border p-2 flex flex-col justify-between items-center text-xs transition-all active:scale-95 hover:shadow-sm ${
+                        isToday ? 'border-diary-800 ring-2 ring-diary-200' : 'border-diary-200'
+                    } ${dayEntries.length ? 'bg-diary-100/70' : 'bg-white hover:bg-diary-50'}`;
+
+                    const moods = dayEntries.slice(0, 3).map(e => e.mood || '✨').join(' ');
+                    cell.innerHTML = `
+                        <span class="font-bold ${isToday ? 'text-diary-900' : 'text-diary-800'}">${day}</span>
+                        <span class="text-sm sm:text-base leading-none">${moods}</span>
+                        <span class="text-[9px] text-diary-500">${dayEntries.length ? `${dayEntries.length} ${dayEntries.length === 1 ? 'entry' : 'entries'}` : 'Add'}</span>
+                    `;
+                    cell.onclick = () => this.openCalendarDate(dateStr);
+                    grid.appendChild(cell);
+                }
+            }
+
+            openCalendarDate(dateStr) {
+                this.selectedCalendarDate = dateStr;
+                const entries = this.entries.filter(e => e.date === dateStr);
+
+                if (!entries.length) {
+                    this.openEditor(null, dateStr);
+                    return;
+                }
+
+                const [y, m, d] = dateStr.split('-');
+                const title = document.getElementById('calendar-date-title');
+                title.innerText = new Date(Number(y), Number(m) - 1, Number(d)).toLocaleDateString(undefined, {
+                    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+                });
+
+                const list = document.getElementById('calendar-date-entries');
+                list.innerHTML = entries.map(entry => `
+                    <button type="button" onclick="app.viewEntryDetails('${entry.id}')"
+                        class="w-full text-left p-4 rounded-2xl border border-diary-200 bg-diary-50 hover:bg-diary-100 transition-all">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="font-serif font-bold text-diary-900 truncate">${this.escapeHtml(entry.title || 'Untitled')}</span>
+                            <span>${entry.mood || '✨'}</span>
+                        </div>
+                        <p class="text-xs text-diary-600 mt-1 line-clamp-2">${this.escapeHtml(entry.content || '')}</p>
+                    </button>
+                `).join('');
+
+                document.getElementById('calendar-date-modal').classList.remove('hidden');
+                document.getElementById('calendar-date-modal').classList.add('flex');
+            }
+
+            viewEntryDetails(id) {
+                const entry = this.entries.find(e => e.id === id);
+                if (!entry) return;
+                this.closeCalendarDateModal();
+                document.getElementById('detail-entry-title').innerText = entry.title || 'Untitled';
+                document.getElementById('detail-entry-date').innerText = entry.date || '';
+                const moodInfo = [...this.moodsList, ...(this.settings.customMoods || [])].find(m => m.emoji === entry.mood);
+                document.getElementById('detail-entry-mood').innerText = `${entry.mood || '✨'} ${moodInfo ? moodInfo.label : 'Mood'}`;
+                document.getElementById('detail-entry-location').innerHTML = `<i class="fa-solid fa-location-dot mr-1"></i>${this.escapeHtml(entry.location || 'Location not set')}`;
+                const feelings = entry.feelings || [];
+                document.getElementById('detail-entry-feelings').innerHTML = feelings.length
+                    ? feelings.map(f => `<span class="px-3 py-2 rounded-xl bg-diary-50 border border-diary-200 text-xs font-semibold">${this.escapeHtml(f)}</span>`).join('')
+                    : '<span class="text-xs text-diary-500">No extra feelings selected.</span>';
+                document.getElementById('detail-entry-content').innerText = entry.content || '(No written content)';
+                const tags = entry.tags || [];
+                const tagWrap = document.getElementById('detail-entry-tags-wrap');
+                tagWrap.classList.toggle('hidden', !tags.length);
+                document.getElementById('detail-entry-tags').innerHTML = tags.map(t => `<span class="px-2.5 py-1 rounded-lg bg-diary-100 text-xs text-diary-700">#${this.escapeHtml(t)}</span>`).join('');
+                const media = document.getElementById('detail-entry-media');
+                const photos = entry.photos || [];
+                const sketches = entry.sketches || [];
+                media.innerHTML = [...photos, ...sketches].map(src => `<img src="${src}" class="w-full aspect-square object-cover rounded-2xl border border-diary-200 cursor-pointer" onclick="app.openMediaLightbox('${src}')">`).join('');
+                if (entry.audio) media.innerHTML += `<audio controls src="${entry.audio}" class="col-span-full w-full"></audio>`;
+                document.getElementById('detail-entry-edit-btn').onclick = () => { this.closeEntryDetail(); this.openEditor(entry.id); };
+                const modal = document.getElementById('entry-detail-modal');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+            }
+
+            closeEntryDetail() {
+                const modal = document.getElementById('entry-detail-modal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            }
+
+            closeCalendarDateModal() {
+                const modal = document.getElementById('calendar-date-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            addEntryForCalendarDate() {
+                const date = this.selectedCalendarDate;
+                this.closeCalendarDateModal();
+                if (date) this.openEditor(null, date);
+            }
+
+            changeMonth(dir) {
+                this.calendarDate.setMonth(this.calendarDate.getMonth() + dir);
+                this.renderCalendar();
+            }
+
+            // --- Analytics Dashboard ---
+            updateAnalytics() {
+                const journalEntries = this.entries;
+                document.getElementById('stat-total-entries').innerText = journalEntries.length;
+
+                let totalWords = journalEntries.reduce((acc, curr) => acc + (curr.content ? curr.content.trim().split(/\s+/).length : 0), 0);
+                document.getElementById('stat-words').innerText = totalWords;
+
+                // Streak calculation
+                let streak = 0;
+                let today = new Date();
+                for (let i = 0; i < 365; i++) {
+                    const dStr = today.toISOString().split('T')[0];
+                    if (journalEntries.some(e => e.date === dStr)) {
+                        streak++;
+                        today.setDate(today.getDate() - 1);
+                    } else if (i === 0) {
+                        today.setDate(today.getDate() - 1);
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                document.getElementById('stat-streak').innerText = `${streak} days`;
+
+                // On This Day
+                const todayMD = new Date().toISOString().slice(5, 10);
+                const pastEntry = this.entries.find(e => e.date && e.date.slice(5, 10) === todayMD && e.date.slice(0, 4) !== new Date().toISOString().slice(0, 4));
+                const otdContainer = document.getElementById('on-this-day-content');
+                if (pastEntry) {
+                    otdContainer.innerHTML = `<h4 class="font-serif font-bold text-diary-900 mb-1">${pastEntry.title} (${pastEntry.date})</h4><p>${pastEntry.content}</p>`;
+                } else {
+                    otdContainer.innerText = 'No past entries found for this calendar date in previous years.';
+                }
+            }
+
+            // --- Media Gallery ---
+            renderGallery(type) {
+                this.activeGalleryFilter = type;
+                const grid = document.getElementById('gallery-grid');
+                grid.innerHTML = '';
+
+                let items = [];
+                this.entries.forEach(e => {
+                    if (e.photos && (type === 'all' || type === 'photo')) {
+                        e.photos.forEach(p => items.push({ type: 'photo', src: p, date: e.date }));
+                    }
+                    if (e.sketches && (type === 'all' || type === 'sketch')) {
+                        e.sketches.forEach(s => items.push({ type: 'sketch', src: s, date: e.date }));
+                    }
+                });
+
+                if (items.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-12 text-center text-diary-500 text-xs">No media files found in this journal.</div>`;
+                    return;
+                }
+
+                items.forEach(item => {
+                    grid.innerHTML += `<button type="button" onclick="app.openMediaLightbox('${item.src.replace(/'/g, "\\'")}')" class="bg-white rounded-2xl overflow-hidden aspect-square border border-diary-200 shadow-sm active:scale-[0.98] transition-transform"><img src="${item.src}" class="w-full h-full object-cover" loading="lazy"></button>`;
+                });
+            }
+
+            openMediaLightbox(src) {
+                document.getElementById('media-lightbox-image').src = src;
+                document.getElementById('media-lightbox').classList.remove('hidden');
+                document.getElementById('media-lightbox').classList.add('flex');
+            }
+
+            closeMediaLightbox() {
+                const box = document.getElementById('media-lightbox');
+                box.classList.add('hidden');
+                box.classList.remove('flex');
+                document.getElementById('media-lightbox-image').src = '';
+            }
+
+            filterGallery(type) {
+                document.querySelectorAll('.gallery-filter').forEach(b => {
+                    b.className = "px-4 py-2 rounded-xl text-xs font-semibold bg-diary-100 text-diary-800 gallery-filter";
+                });
+                event.target.className = "px-4 py-2 rounded-xl text-xs font-semibold bg-diary-800 text-white gallery-filter";
+                this.renderGallery(type);
+            }
+
+            // --- Data Backup & Restore ---
+            exportData() {
+                const dataBackup = {
+                    version: "2.0",
+                    exportDate: new Date().toISOString(),
+                    entries: this._realEntries,
+                    decoyEntries: this._decoyEntries,
+                    decoyPin: this.decoyPin,
+                    settings: this.settings
+                };
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataBackup, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", `chronicle_diary_backup_${new Date().toISOString().split('T')[0]}.json`);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+                this.showModal("Export Complete", "Your diary backup JSON file has been downloaded successfully.");
+            }
+
+            importData(event) {
+                const fileReader = new FileReader();
+                if (event.target.files[0]) {
+                    fileReader.readAsText(event.target.files[0], "UTF-8");
+                    fileReader.onload = (e) => {
+                        try {
+                            const parsed = JSON.parse(e.target.result);
+                            if (parsed.entries && Array.isArray(parsed.entries)) {
+                                this._realEntries = Array.isArray(parsed.entries) ? parsed.entries : [];
+                                this._decoyEntries = Array.isArray(parsed.decoyEntries) ? parsed.decoyEntries : [];
+                                this.decoyPin = parsed.decoyPin || this.decoyPin || null;
+                                if (parsed.settings) this.settings = { ...this.settings, ...parsed.settings };
+                                this.saveToStorage();
+                                this.renderEntries();
+                                this.updateSettingsUI();
+                                this.showModal("Import Successful", `Successfully imported ${this.entries.length} diary entries.`);
+                            } else {
+                                this.showModal("Invalid File", "The uploaded JSON file format is invalid.");
+                            }
+                        } catch (err) {
+                            this.showModal("Import Error", "Could not parse the backup JSON file.");
+                        }
+                    };
+                }
+            }
+
+            confirmClearAll() {
+                this.showModal("Danger: Clear All", "Are you completely sure? This will delete all entries from your browser storage. Make sure you exported a backup first!", () => {
+                    this.entries = [];
+                    this.settings.pin = null;
+                    this.saveToStorage();
+                    this.renderEntries();
+                    this.updateSettingsUI();
+                    this.showModal("Cleared", "All journal entries have been wiped.");
+                }, true);
+            }
+
+            showModal(title, message, confirmCallback = null, showCancel = false) {
+                document.getElementById('modal-title').innerText = title;
+                document.getElementById('modal-message').innerText = message;
+                const confirmBtn = document.getElementById('modal-confirm-btn');
+                const cancelBtn = document.getElementById('modal-cancel-btn');
+
+                if (showCancel) {
+                    cancelBtn.classList.remove('hidden');
+                } else {
+                    cancelBtn.classList.add('hidden');
+                }
+
+                const newConfirmBtn = confirmBtn.cloneNode(true);
+                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+                newConfirmBtn.onclick = () => {
+                    this.closeModal();
+                    if (confirmCallback) confirmCallback();
+                };
+
+                document.getElementById('custom-modal').classList.remove('hidden');
+            }
+
+            closeModal() {
+                document.getElementById('custom-modal').classList.add('hidden');
+            }
+
+            escapeHtml(text) {
+                if (!text) return '';
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+        }
+
+        let app;
+        window.onload = () => {
+            app = new DiaryApp();
+        };
+    </script>
+</body>
+</html>
