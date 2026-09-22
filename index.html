@@ -529,6 +529,7 @@
                 <div class="h-4 w-[1px] bg-diary-300 mx-1"></div>
                 <button onclick="app.openSketchpadModal()" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100 flex items-center gap-1 text-diary-800 font-semibold"><i class="fa-solid fa-paintbrush"></i> Sketch</button>
                 <button onclick="app.toggleAudioRecording()" id="audio-rec-btn" class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100 flex items-center gap-1 text-rose-600 font-semibold"><i class="fa-solid fa-microphone"></i> Record</button>
+                <span class="text-[10px] text-diary-500 whitespace-nowrap"></span>
                 <button onclick="app.toggleAudioPause()" id="audio-pause-btn" class="hidden p-2 rounded-lg bg-amber-50 border border-amber-200 hover:bg-amber-100 flex items-center gap-1 text-amber-700 font-semibold"><i class="fa-solid fa-pause"></i> Pause</button>
                 <label class="p-2 rounded-lg bg-white border border-diary-200 hover:bg-diary-100 flex items-center gap-1 cursor-pointer text-diary-800 font-semibold">
                     <i class="fa-solid fa-camera"></i> Camera <input id="camera-input" type="file" accept="image/*" capture="environment" onchange="app.attachPhoto(event)" class="hidden">
@@ -651,7 +652,7 @@
                 this.audioTimerInterval = null;
                 this.audioStartedAt = 0;
                 this.audioElapsedBeforePause = 0;
-                this.currentEntryAudio = null;
+                this.currentEntryAudio = [];
                 this.currentEntryLocation = '';
                 this.currentEntryFeelings = [];
                 this.currentEntryPhotos = [];
@@ -1040,7 +1041,7 @@
                 this.currentEditingId = id;
                 this.currentEntryPhotos = [];
                 this.currentEntrySketches = [];
-                this.currentEntryAudio = null;
+                this.currentEntryAudio = [];
                 this.currentEntryFeelings = [];
                 document.getElementById('entry-media-preview').innerHTML = '';
                 document.getElementById('feelings-picker')?.classList.add('hidden');
@@ -1058,7 +1059,7 @@
                         document.getElementById('entry-mood-select').value = entry.mood || '😃';
                         this.currentEntryPhotos = entry.photos || [];
                         this.currentEntrySketches = entry.sketches || [];
-                        this.currentEntryAudio = entry.audio || null;
+                        this.currentEntryAudio = Array.isArray(entry.audio) ? entry.audio : (entry.audio ? [entry.audio] : []);
                         this.currentEntryLocation = entry.location || '';
                         this.currentEntryFeelings = entry.feelings || [];
                         this.updateEntryLocationUI();
@@ -1249,7 +1250,7 @@
                         entry.date = entryDate;
                         entry.photos = this.currentEntryPhotos;
                         entry.sketches = this.currentEntrySketches;
-                        entry.audio = this.currentEntryAudio;
+                        entry.audio = [...this.currentEntryAudio];
                         entry.location = this.currentEntryLocation || '';
                         entry.updatedAt = new Date().toISOString();
                     }
@@ -1265,7 +1266,7 @@
                         feelings: [...this.currentEntryFeelings],
                         photos: this.currentEntryPhotos,
                         sketches: this.currentEntrySketches,
-                        audio: this.currentEntryAudio,
+                        audio: [...this.currentEntryAudio],
                         location: this.currentEntryLocation || '',
                         starred: false,
                         createdAt: new Date().toISOString()
@@ -1361,9 +1362,10 @@
                     container.innerHTML += `<div class="relative w-16 h-16 rounded-xl overflow-hidden border border-diary-200"><img src="${sketch}" class="w-full h-full object-cover"><button onclick="app.currentEntrySketches.splice(${idx},1);app.renderMediaPreviews();" class="absolute top-1 right-1 bg-black/60 text-white rounded-full w-4 h-4 text-[9px] flex items-center justify-center">×</button></div>`;
                 });
 
-                if (this.currentEntryAudio) {
-                    container.innerHTML += `<div class="flex items-center gap-2 p-2 rounded-xl bg-diary-100 text-xs font-semibold text-diary-800 w-full sm:w-auto"><i class="fa-solid fa-microphone text-rose-500"></i><audio controls preload="metadata" src="${this.currentEntryAudio}" class="max-w-[12rem]"></audio><button onclick="app.currentEntryAudio=null;app.renderMediaPreviews();" class="text-rose-500 ml-1">×</button></div>`;
-                }
+                const audioList = Array.isArray(this.currentEntryAudio) ? this.currentEntryAudio : (this.currentEntryAudio ? [this.currentEntryAudio] : []);
+                audioList.forEach((audio, idx) => {
+                    container.innerHTML += `<div class="flex items-center gap-2 p-2 rounded-xl bg-diary-100 text-xs font-semibold text-diary-800 w-full sm:w-auto"><i class="fa-solid fa-microphone text-rose-500"></i><span>Voice ${idx + 1}</span><audio controls preload="metadata" src="${audio}" class="max-w-[12rem] flex-1"></audio><button onclick="app.currentEntryAudio.splice(${idx},1);app.renderMediaPreviews();" class="text-rose-500 ml-1">×</button></div>`;
+                });
             }
 
             // --- Vector Sketchpad ---
@@ -1528,7 +1530,7 @@
                         const blob = new Blob(this.audioChunks, { type });
                         const reader = new FileReader();
                         reader.onload = e => {
-                            this.currentEntryAudio = e.target.result;
+                            this.currentEntryAudio.push(e.target.result);
                             this.renderMediaPreviews();
                             this.resetAudioUI();
                         };
@@ -1678,7 +1680,8 @@
                 const photos = entry.photos || [];
                 const sketches = entry.sketches || [];
                 media.innerHTML = [...photos, ...sketches].map(src => `<img src="${src}" class="w-full aspect-square object-cover rounded-2xl border border-diary-200 cursor-pointer" onclick="app.openMediaLightbox('${src}')">`).join('');
-                if (entry.audio) media.innerHTML += `<audio controls src="${entry.audio}" class="col-span-full w-full"></audio>`;
+                const audioList = Array.isArray(entry.audio) ? entry.audio : (entry.audio ? [entry.audio] : []);
+                audioList.forEach((audio, idx) => { media.innerHTML += `<div class="col-span-full flex items-center gap-2 p-3 rounded-2xl bg-diary-50 border border-diary-200"><i class="fa-solid fa-microphone text-rose-500"></i><span class="text-xs font-semibold">Voice ${idx + 1}</span><audio controls src="${audio}" class="flex-1 min-w-0"></audio></div>`; });
                 document.getElementById('detail-entry-edit-btn').onclick = () => { this.closeEntryDetail(); this.openEditor(entry.id); };
                 const modal = document.getElementById('entry-detail-modal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
